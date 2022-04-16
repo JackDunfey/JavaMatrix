@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+
 public class Matrix implements Cloneable{
     public static class MatrixDimension implements Cloneable{
         private int rows;
@@ -29,13 +30,13 @@ public class Matrix implements Cloneable{
         }
     }
     protected MatrixDimension size;
-    private ArrayList<ArrayList<Double>> matrix;
-    private Matrix(ArrayList<ArrayList<Double>> matrix, MatrixDimension size){
+    private double[][] matrix;
+    private Matrix(double[][] matrix, MatrixDimension size){
         this.matrix = matrix;
         this.size = size;
     }
-    public Matrix(ArrayList<ArrayList<Double>> matrix){
-        this(matrix, new MatrixDimension(matrix.size(), matrix.get(0).size()));
+    public Matrix(double[][] matrix){
+        this(matrix, new MatrixDimension(matrix.length, matrix[0].length));
     }
     public Matrix(MatrixDimension size){ 
         this(Matrix.generateMatrix(size), size);
@@ -43,23 +44,20 @@ public class Matrix implements Cloneable{
     public Matrix(int rows, int cols){
         this(new MatrixDimension(rows, cols));
     }
-    public static ArrayList<ArrayList<Double>> generateMatrix(MatrixDimension size){
-        var matrix = new ArrayList<ArrayList<Double>>(size.rows());
-        for(int i = 0; i < size.rows(); i++){
-            var l = new ArrayList<Double>(size.cols());
-            for(int j = 0; j < size.cols(); l.add(0D), j++);
-            matrix.add(l);
-        }
+    public static double[][] generateMatrix(MatrixDimension size){
+        var matrix = new double[size.rows()][size.cols()];
+        for(int i = 0; i < size.rows(); i++)
+            for(int j = 0; j < size.cols(); matrix[i][j++] = 0D);
         return matrix;
     }
     public MatrixDimension size(){
         return this.size;
     }
     public double get(int row, int col){
-        return this.matrix.get(row).get(col);
+        return this.matrix[row][col];
     }
     public void set(int row, int col, double value){
-        this.matrix.get(row).set(col, value);
+        this.matrix[row][col] = value;
     }
     public void set(double[][] values) throws MatrixDimensionMismatch{
         if(!this.size.equals(new MatrixDimension(values.length, values[0].length)))
@@ -88,10 +86,12 @@ public class Matrix implements Cloneable{
                 this.set(r, c, this.get(r,c) + scalar);
         return this;
     }
-    public static Matrix multiply(Matrix a, Matrix b){
+    public static Matrix multiply(Matrix a, Matrix b) throws MatrixDimensionMismatch{
         return a.clone().multiply(b);
     }
-    public Matrix multiply(Matrix other){
+    public Matrix multiply(Matrix other) throws MatrixDimensionMismatch{
+        if(this.size.cols() != other.size.rows())
+            throw new MatrixDimensionMismatch();
         var output = new double[this.size.rows()][other.size.cols()];
         for(int y = 0; y < this.size.rows(); y++){
             for(int o = 0; o < other.size.cols(); o++){
@@ -100,19 +100,19 @@ public class Matrix implements Cloneable{
                 output[y][o] = sum;
             }
         }
-        var m = new ArrayList<ArrayList<Double>>(output.length);
-        for(int i = 0; i < output.length; i++){
-            var e = new ArrayList<Double>();
-            for(int j = 0; j < output[0].length; j++){
-                e.add(output[i][j]);
-            }
-            m.add(e);
-        }
-        return new Matrix(m);
+        this.set(output);
+        return this;
     }
     @Override
     public String toString(){
-        return this.matrix.toString();
+        var l = new ArrayList<ArrayList<Double>>();
+        for(int r = 0; r < this.size.rows(); r++){
+            var s = new ArrayList<Double>();
+            for(int c = 0; c < this.size.cols(); c++)
+                s.add(this.matrix[r][c]);
+            l.add(s);
+        }
+        return l.toString();
     }
     @Override
     public Matrix clone(){
@@ -129,8 +129,8 @@ public class Matrix implements Cloneable{
         a.set(values);
         b.set(values);
         System.out.println(a.multiply(b));
-        // System.out.println(a.add(b));
-        // System.out.println(Matrix.add(a, 2));
-        // System.out.println(a.add(1));
+        System.out.println(a.add(b));
+        System.out.println(Matrix.add(a, 2));
+        System.out.println(a.add(1));
     }
 }
